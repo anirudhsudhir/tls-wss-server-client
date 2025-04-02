@@ -1,11 +1,12 @@
 use clap::Parser;
-use rustls::pki_types::CertificateDer;
-use rustls::pki_types::pem::PemObject;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt, stdout},
     net::TcpStream,
 };
-use tokio_rustls::TlsConnector;
+use tokio_rustls::{
+    TlsConnector,
+    rustls::pki_types::{CertificateDer, pem::PemObject},
+};
 
 use std::sync::Arc;
 

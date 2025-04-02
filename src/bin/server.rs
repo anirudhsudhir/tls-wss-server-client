@@ -1,13 +1,18 @@
 use clap::Parser;
-use rustls::ServerConfig;
-use rustls::pki_types::pem::PemObject;
-use rustls::pki_types::{CertificateDer, PrivateKeyDer};
+use tokio::{
+    io::{AsyncReadExt, AsyncWriteExt},
+    net::TcpListener,
+};
+use tokio_rustls::{
+    TlsAcceptor,
+    rustls::{
+        ServerConfig,
+        pki_types::{CertificateDer, PrivateKeyDer, pem::PemObject},
+    },
+};
 
 use std::error::Error;
-use std::io::{Read, Write};
-use std::net::TcpListener;
 use std::sync::Arc;
-use std::thread;
 
 /// TLS server
 #[derive(Parser, Debug)]
@@ -28,22 +33,22 @@ struct Args {
     key_path: String,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     let mut args = Args::parse();
-    let config = configure_tls(&mut args).unwrap();
 
-    let listener = TcpListener::bind(&args.server).unwrap();
+    let tls_acceptor = TlsAcceptor::from(Arc::new(configure_tls(&mut args)?));
+    let listener = TcpListener::bind(&args.server).await.unwrap();
     println!("TLS server running at {}", args.server);
 
-    while let Ok((mut stream, _)) = listener.accept() {
-        let cfg_clone = config.clone();
-        thread::spawn(move || {
-            println!("\nReceived new connection at server");
-            let mut conn = rustls::ServerConnection::new(Arc::new(cfg_clone)).unwrap();
-            let mut tls_stream = rustls::Stream::new(&mut conn, &mut stream);
+    while let Ok((stream, _)) = listener.accept().await {
+        let acceptor = tls_acceptor.clone();
+        tokio::spawn(async move {
+            println!("\nReceived new connection at server, starting TLS stream");
+            let mut tls_stream = acceptor.accept(stream).await.unwrap();
 
             let mut buf = vec![0u8; 100];
-            let len = tls_stream.read(&mut buf).unwrap();
+            let len = tls_stream.read(&mut buf).await.unwrap();
             let _ = buf.split_off(len);
 
             println!(
@@ -51,7 +56,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 String::from_utf8(buf).unwrap()
             );
 
-            let _ = tls_stream.write(b"Hello from the server").unwrap();
+            tls_stream
+                .write_all(b"Hello from the server")
+                .await
+                .unwrap();
             println!("Closing current connection\n");
         });
     }
