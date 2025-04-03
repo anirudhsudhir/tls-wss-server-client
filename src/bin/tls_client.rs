@@ -1,6 +1,6 @@
 use clap::Parser;
 use tokio::{
-    io::{AsyncReadExt, AsyncWriteExt, stdout},
+    io::{self, AsyncReadExt, AsyncWriteExt},
     net::TcpStream,
 };
 use tokio_rustls::{
@@ -13,7 +13,7 @@ use std::sync::Arc;
 /// TLS client
 #[derive(Parser, Debug)]
 #[command(name = "TLS Client")]
-#[command(version = "0.1.0")]
+#[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(about = "A TLS client in Rust, using rustls", long_about = None)]
 struct Args {
     /// The server endpoint
@@ -48,27 +48,25 @@ async fn main() {
     let sock = TcpStream::connect(format!("{}:{}", args.server, args.port))
         .await
         .unwrap();
+    let mut tls = conn.connect(server_name, sock).await.unwrap();
     println!(
-        "Connected to TCP socket, starting TLS connection to {}:{}",
+        "TLS connection to server {}:{} has been established!",
         args.server, args.port
     );
 
-    let mut tls = conn.connect(server_name, sock).await.unwrap();
-    println!("Writing to TLS stream");
+    let mut buf = vec![0u8; 3000];
+    println!("Enter a message to be sent to the server:");
+    let mut len = io::stdin().read(&mut buf).await.unwrap();
+    // TODO: remove newline (currently using len-1)
+    tls.write_all(&buf[..len - 1]).await.unwrap();
 
-    tls.write_all("hello from the client".as_bytes())
-        .await
-        .unwrap();
-
-    let mut plaintext = vec![0u8; 1000];
-    let len = tls.read(&mut plaintext).await.unwrap();
-    let _ = plaintext.split_off(len);
-
-    stdout()
+    println!("Waiting for a message from the server");
+    len = tls.read(&mut buf).await.unwrap();
+    io::stdout()
         .write_all(
             format!(
-                "Response from the server: `{}`\n",
-                String::from_utf8(plaintext).unwrap()
+                "Received a message from the server: `{}`\n",
+                String::from_utf8(buf[..len].to_vec()).unwrap()
             )
             .as_bytes(),
         )

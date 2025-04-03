@@ -1,11 +1,18 @@
 [package]
-name = "tls_server_client"
+name = "tls_ws_server_client"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 clap = { version = "4.5.35", features = ["derive"] }
 rustls = "0.23.25"
-webpki-roots = "0.26.8"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = [
+  "rt-multi-thread",
+  "io-std",
+  "io-util",
+  "net",
+  "macros",
+] }
 tokio-rustls = "0.26.2"
+tokio-tungstenite = "0.26.2"
+webpki-roots = "0.26.8"
