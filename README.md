@@ -1,4 +1,4 @@
-# TLS server and client in Rust using rustls
+# A TLS and WSS server and client in Rust using rustls
 
 ## Usage
 
@@ -10,20 +10,62 @@ chmod +x generate.sh
 ./generate.sh
 ```
 
-### Server
+### TLS Server
 
 ```sh
-cargo r -- bin server <server_endpoint> <root_cert> <private_key>
+A TLS server in Rust, using rustls
 
-# example
-cargo r -- bin server localhost:4443 certs/localhost_cert.pem certs/localhost_private.pem
+Usage: tls_server [OPTIONS]
+
+Options:
+  -s, --server <SERVER>        The server endpoint [default: localhost:4443]
+  -c, --cert-path <CERT_PATH>  Certificate path [default: certs/localhost_cert.pem]
+  -k, --key-path <KEY_PATH>    Key path [default: certs/localhost_private.pem]
+  -h, --help                   Print help
+  -V, --version                Print version
 ```
 
-### Client
+### TLS Client
 
 ```sh
-cargo r -- bin client <server_endpoint> <server_port> <root_cert>
+A TLS client in Rust, using rustls
 
-# example
-cargo r -- bin client localhost 4443 certs/localhost_cert.pem
+Usage: tls_client [OPTIONS]
+
+Options:
+  -s, --server <SERVER>        The server endpoint [default: localhost]
+  -p, --port <PORT>            The server port [default: 4443]
+  -c, --cert-path <CERT_PATH>  Certificate path [default: certs/localhost_cert.pem]
+  -h, --help                   Print help
+  -V, --version                Print version
+```
+
+### WSS Server
+
+```sh
+A secure websockets server in Rust, using rustls
+
+Usage: wss_server [OPTIONS]
+
+Options:
+  -s, --server <SERVER>        The server endpoint [default: localhost:4443]
+  -c, --cert-path <CERT_PATH>  Certificate path [default: certs/localhost_cert.pem]
+  -k, --key-path <KEY_PATH>    Key path [default: certs/localhost_private.pem]
+  -h, --help                   Print help
+  -V, --version                Print version
+```
+
+### WSS Client
+
+```sh
+A secure websockets client in Rust, using rustls
+
+Usage: wss_client [OPTIONS]
+
+Options:
+  -s, --server <SERVER>        The server endpoint [default: localhost]
+  -p, --port <PORT>            The server port [default: 4443]
+  -c, --cert-path <CERT_PATH>  Certificate path [default: certs/localhost_cert.pem]
+  -h, --help                   Print help
+  -V, --version                Print version
 ```
